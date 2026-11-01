@@ -7,8 +7,6 @@ import 'pickup_tracking_state.dart';
 enum TrackingStageId {
   requested,
   confirmed,
-  collectorAssigned,
-  collectorEnRoute,
   arrived,
   wasteCollected,
   completed,
@@ -80,9 +78,6 @@ const Map<String, PickupPhase> backendStatusToPhase = {
 /// `geofenceExited` and `pickupClosed` do not map to a stage: closure is
 /// reflected by the pickup phase, which only the backend status changes.
 const Map<GeofenceEventType, TrackingStageId> verifiedEventStage = {
-  GeofenceEventType.collectorAssigned: TrackingStageId.collectorAssigned,
-  GeofenceEventType.collectorApproaching: TrackingStageId.collectorEnRoute,
-  GeofenceEventType.geofenceEntered: TrackingStageId.collectorEnRoute,
   GeofenceEventType.collectorArrived: TrackingStageId.arrived,
   GeofenceEventType.collectionStarted: TrackingStageId.arrived,
   GeofenceEventType.collectionCompleted: TrackingStageId.wasteCollected,
@@ -159,20 +154,6 @@ List<TrackingStep> buildTimeline(PickupTrackingState state) {
       icon: Icons.verified_rounded,
       status: StageStatus.done,
       time: state.requestedAt,
-    ),
-    collectorStage(
-      TrackingStageId.collectorAssigned,
-      'Collector Assigned',
-      Icons.badge_rounded,
-      'A collector has been assigned to your pickup.',
-      'Appears once EcoTrack assigns a collector.',
-    ),
-    collectorStage(
-      TrackingStageId.collectorEnRoute,
-      'Collector En Route',
-      Icons.local_shipping_rounded,
-      'EcoTrack verified the collector is approaching your pickup point.',
-      'Appears once the collector is approaching.',
     ),
     collectorStage(
       TrackingStageId.arrived,

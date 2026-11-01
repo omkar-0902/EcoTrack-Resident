@@ -138,29 +138,52 @@ class _TrackingViewState extends ConsumerState<TrackingView> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: true,
-        title: Text(
-          "TRACK PICKUP",
-          style: GoogleFonts.spaceGrotesk(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 2,
-            color: cs.primary,
+    // While the pickup is active the screen is locked — the user must
+    // explicitly confirm PICKED UP or NOT PICKED UP to leave. PopScope
+    // prevents the Android back gesture/button and the iOS swipe-back from
+    // closing the screen without a confirmation.
+    return PopScope(
+      canPop: !state.isActive,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && state.isActive) {
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              const SnackBar(
+                content: Text(
+                  'Please confirm the pickup outcome before leaving.',
+                ),
+              ),
+            );
+        }
+      },
+      child: Scaffold(
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          centerTitle: true,
+          // Hide the back button while locked so the user is not confused by
+          // a button that does nothing.
+          automaticallyImplyLeading: !state.isActive,
+          title: Text(
+            "TRACK PICKUP",
+            style: GoogleFonts.spaceGrotesk(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 2,
+              color: cs.primary,
+            ),
           ),
         ),
+        body: body,
+        bottomNavigationBar: bottom == null
+            ? null
+            : SafeArea(
+                minimum: const EdgeInsets.fromLTRB(24, 12, 24, 16),
+                child: bottom,
+              ),
       ),
-      body: body,
-      bottomNavigationBar: bottom == null
-          ? null
-          : SafeArea(
-              minimum: const EdgeInsets.fromLTRB(24, 12, 24, 16),
-              child: bottom,
-            ),
     );
   }
 }

@@ -33,11 +33,19 @@ class _PickupOutcomeButtonsState extends ConsumerState<PickupOutcomeButtons> {
 
     if (!mounted) return;
     setState(() => _isSubmitting = false);
+
     if (!result.isSuccess) {
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
         ..showSnackBar(SnackBar(content: Text(result.errorMessage)));
+      // Keep the lock in place — outcome was not recorded.
+      return;
     }
+
+    // The controller has already set the phase to completed / notCollected,
+    // which flips PopScope.canPop to true. Pop now to return the user to the
+    // previous screen (Home or wherever they navigated from).
+    if (mounted) Navigator.of(context).maybePop();
   }
 
   @override

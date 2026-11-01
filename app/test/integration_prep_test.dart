@@ -171,10 +171,10 @@ void main() {
       final steps = buildTimeline(s);
       TrackingStep step(TrackingStageId id) =>
           steps.firstWhere((x) => x.id == id);
-      expect(step(TrackingStageId.collectorAssigned).status, StageStatus.done);
-      expect(step(TrackingStageId.collectorAssigned).time,
-          DateTime.utc(2026, 11, 2, 7, 1));
-      expect(step(TrackingStageId.collectorEnRoute).status, StageStatus.current);
+      // collectorAssigned / collectorEnRoute stages have been removed from
+      // the timeline. Events 'a' and 'b' now produce no confirmed stage;
+      // 'confirmed' remains the current stage and 'arrived' is upcoming.
+      expect(step(TrackingStageId.confirmed).status, StageStatus.current);
       expect(step(TrackingStageId.arrived).status, StageStatus.upcoming);
       // The pickup phase is still governed by the backend status only.
       expect(s.isActive, isTrue);
