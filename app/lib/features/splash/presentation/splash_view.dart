@@ -23,13 +23,24 @@ class _SplashViewState extends State<SplashView> {
 
     if (!mounted) return;
 
-    // Check if session is valid
-    final bool isSessionValid = await AuthService.isSessionValid();
+    // Check if session is valid. Any unexpected failure is treated as
+    // "no session" so the user is never stuck on the splash screen.
+    bool isSessionValid = false;
+    String? username;
+    try {
+      isSessionValid = await AuthService.isSessionValid();
+      if (isSessionValid) {
+        username = await AuthService.getUsernameFromToken();
+      }
+    } catch (_) {
+      isSessionValid = false;
+    }
+
+    // pushReplacement replaces the TOP route; only redirect if the splash is
+    // still the visible route, so it can never replace some other screen.
+    if (!mounted || ModalRoute.of(context)?.isCurrent != true) return;
 
     if (isSessionValid) {
-      // Get username from token if possible
-      final username = await AuthService.getUsernameFromToken();
-      
       Navigator.pushReplacementNamed(
         context, 
         '/home', 
@@ -56,7 +67,7 @@ class _SplashViewState extends State<SplashView> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -73,7 +84,7 @@ class _SplashViewState extends State<SplashView> {
                     borderRadius: BorderRadius.circular(30),
                     boxShadow: [
                       BoxShadow(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -118,7 +129,7 @@ class _SplashViewState extends State<SplashView> {
                 width: 40,
                 height: 40,
                 child: CircularProgressIndicator(
-                  color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                  color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
                   strokeWidth: 2,
                 ),
               ),

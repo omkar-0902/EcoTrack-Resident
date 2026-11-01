@@ -1,0 +1,5 @@
+{
+  "APP_ENV": "dev",
+  "API_BASE_URL": "https://ecotrack-rm92.onrender.com",
+  "PICKUP_MAX_ACCURACY_M": ""
+}

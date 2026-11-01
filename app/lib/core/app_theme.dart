@@ -91,7 +91,7 @@ class AppTheme {
           borderSide: BorderSide(color: primaryNeon, width: 2),
         ),
         labelStyle: GoogleFonts.inter(color: onSurfaceVariant),
-        hintStyle: GoogleFonts.inter(color: onSurfaceVariant.withOpacity(0.5)),
+        hintStyle: GoogleFonts.inter(color: onSurfaceVariant.withValues(alpha: 0.5)),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(
@@ -173,7 +173,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(24),
           side: const BorderSide(color: Color(0xFFCCE9D1), width: 1.5),
         ),
-        shadowColor: const Color(0xFF1BA34A).withOpacity(0.08),
+        shadowColor: const Color(0xFF1BA34A).withValues(alpha: 0.08),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
@@ -192,7 +192,7 @@ class AppTheme {
           borderSide: const BorderSide(color: forestPrimary, width: 2),
         ),
         labelStyle: GoogleFonts.inter(color: forestMid),
-        hintStyle: GoogleFonts.inter(color: forestMid.withOpacity(0.5)),
+        hintStyle: GoogleFonts.inter(color: forestMid.withValues(alpha: 0.5)),
       ),
 
       elevatedButtonTheme: ElevatedButtonThemeData(

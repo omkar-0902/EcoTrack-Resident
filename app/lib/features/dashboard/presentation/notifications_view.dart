@@ -14,9 +14,13 @@ class NotificationsView extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
+          tooltip: 'Back',
           onPressed: () {
             AppHaptics.lightImpact();
-            Navigator.pop(context);
+            // Opened via pushNamed from Home/Profile/app bar; returns there.
+            // maybePop is a no-op if this is somehow the only route, instead
+            // of popping to a blank screen.
+            Navigator.maybePop(context);
           },
         ),
         actions: [
@@ -117,12 +121,12 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
         decoration: BoxDecoration(
-          color: isActive ? Theme.of(context).colorScheme.primary.withOpacity(0.1) : Theme.of(context).colorScheme.surfaceContainerHigh,
+          color: isActive ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.1) : Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(20),
-          border: isActive ? Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)) : null,
+          border: isActive ? Border.all(color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5)) : null,
           boxShadow: isActive ? [
             BoxShadow(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.15),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
               blurRadius: 10,
             )
           ] : null,
@@ -170,7 +174,7 @@ class _NotificationItem extends StatelessWidget {
         color: Theme.of(context).colorScheme.surfaceContainer,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(
-          color: isPriority ? Theme.of(context).colorScheme.primary.withOpacity(0.3) : Theme.of(context).colorScheme.outlineVariant.withOpacity(0.1),
+          color: isPriority ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.3) : Theme.of(context).colorScheme.outlineVariant.withValues(alpha: 0.1),
         ),
       ),
       child: Row(
@@ -180,7 +184,7 @@ class _NotificationItem extends StatelessWidget {
             width: 48,
             height: 48,
             decoration: BoxDecoration(
-              color: themeColor.withOpacity(0.1),
+              color: themeColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Icon(icon, color: themeColor, size: 24),
@@ -193,20 +197,24 @@ class _NotificationItem extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      category,
-                      style: GoogleFonts.spaceGrotesk(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 2,
-                        color: themeColor,
+                    Flexible(
+                      child: Text(
+                        category,
+                        overflow: TextOverflow.ellipsis,
+                        style: GoogleFonts.spaceGrotesk(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 2,
+                          color: themeColor,
+                        ),
                       ),
                     ),
+                    const SizedBox(width: 8),
                       Text(
                         time,
                         style: GoogleFonts.inter(
                           fontSize: 10,
-                          color: Theme.of(context).colorScheme.onSurfaceVariant.withOpacity(0.6),
+                          color: Theme.of(context).colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
                         ),
                       ),
                   ],

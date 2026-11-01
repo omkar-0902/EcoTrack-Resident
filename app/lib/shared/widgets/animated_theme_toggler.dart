@@ -70,15 +70,15 @@ class _AnimatedThemeTogglerState extends ConsumerState<AnimatedThemeToggler>
               height: 44,
               decoration: BoxDecoration(
                 color: Color.lerp(
-                  colorScheme.surfaceContainerHighest.withOpacity(0.1),
-                  colorScheme.primary.withOpacity(0.1),
+                  colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
+                  colorScheme.primary.withValues(alpha: 0.1),
                   _controller.value,
                 ),
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: Color.lerp(
-                    colorScheme.outlineVariant.withOpacity(0.1),
-                    colorScheme.primary.withOpacity(0.3),
+                    colorScheme.outlineVariant.withValues(alpha: 0.1),
+                    colorScheme.primary.withValues(alpha: 0.3),
                     _controller.value,
                   )!,
                 ),

@@ -1,30 +1,22 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// App smoke test. (Replaces the default Flutter "counter" template test,
+// which tested a counter widget that does not exist in this app.)
 
-import 'package:flutter/material.dart';
+import 'package:app/features/splash/presentation/splash_view.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:app/main.dart';
+import 'support/test_harness.dart';
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('app launches on the splash screen', (tester) async {
+    setUpFakes();
+    await pumpApp(tester);
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    expect(find.byType(SplashView), findsOneWidget);
+    expect(find.text('ECO CONNECT'), findsOneWidget);
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    // Let the splash redirect timer complete so no timers are left pending.
+    await tester.pump(const Duration(seconds: 3));
+    await settle(tester);
+    expect(tester.takeException(), isNull);
   });
 }

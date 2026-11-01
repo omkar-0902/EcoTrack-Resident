@@ -25,7 +25,7 @@ class GhostButton extends StatelessWidget {
       },
       style: OutlinedButton.styleFrom(
         side: BorderSide(
-          color: cs.primary.withOpacity(0.2),
+          color: cs.primary.withValues(alpha: 0.2),
           width: 1.5,
         ),
         padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),

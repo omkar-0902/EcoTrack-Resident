@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
 import '../../../core/haptics.dart';
+import '../../../services/location_service.dart';
 
-class LocationPermissionView extends StatefulWidget {
+class LocationPermissionView extends ConsumerStatefulWidget {
   const LocationPermissionView({super.key});
 
   @override
-  State<LocationPermissionView> createState() => _LocationPermissionViewState();
+  ConsumerState<LocationPermissionView> createState() =>
+      _LocationPermissionViewState();
 }
 
-class _LocationPermissionViewState extends State<LocationPermissionView>
+class _LocationPermissionViewState extends ConsumerState<LocationPermissionView>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
@@ -35,25 +36,47 @@ class _LocationPermissionViewState extends State<LocationPermissionView>
     super.dispose();
   }
 
-  // ✅ REAL LOCATION FUNCTION
-  Future<Position?> getUserLocation() async {
-    var status = await Permission.location.request();
+  bool _isRequesting = false;
 
-    if (status.isDenied) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Location permission denied")),
-      );
-      return null;
-    }
-
-    if (status.isPermanentlyDenied) {
-      await openAppSettings();
-      return null;
-    }
-
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
+  void _showMessage(String message, {SnackBarAction? action}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(message), action: action),
     );
+  }
+
+  /// Asks for "while using the app" location permission (never background).
+  /// Returns true when the user can move on; false when they must act first
+  /// (feedback is shown). The position itself is only read later, when a
+  /// pickup is scheduled.
+  Future<bool> _requestLocationAccess() async {
+    final service = ref.read(locationServiceProvider);
+    final issue = await service.ensurePermission();
+    switch (issue) {
+      case null:
+        return true;
+      case LocationIssue.permissionDeniedForever:
+        _showMessage(describeLocationIssue(issue));
+        await service.openSettingsFor(issue);
+        return false;
+      case LocationIssue.serviceDisabled:
+        _showMessage(
+          describeLocationIssue(issue),
+          action: SnackBarAction(
+            label: 'SETTINGS',
+            onPressed: () => service.openSettingsFor(issue),
+          ),
+        );
+        return false;
+      case LocationIssue.permissionDenied:
+        _showMessage("Location permission denied");
+        return false;
+      case LocationIssue.unavailable:
+      case LocationIssue.inaccurate:
+        // Permission state could not be read right now; not a reason to
+        // block onboarding (location is checked again when scheduling).
+        return true;
+    }
   }
 
   @override
@@ -72,7 +95,7 @@ class _LocationPermissionViewState extends State<LocationPermissionView>
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: cs.primary.withOpacity(0.03),
+                color: cs.primary.withValues(alpha: 0.03),
               ),
             ),
           ),
@@ -95,7 +118,7 @@ class _LocationPermissionViewState extends State<LocationPermissionView>
                             height: 160,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color: cs.primary.withOpacity(0.05),
+                              color: cs.primary.withValues(alpha: 0.05),
                             ),
                           ),
                         ),
@@ -137,24 +160,32 @@ class _LocationPermissionViewState extends State<LocationPermissionView>
 
                   const Spacer(),
 
-                  // ✅ UPDATED BUTTON
                   ElevatedButton(
-                    onPressed: () async {
-                      AppHaptics.mediumImpact();
+                    onPressed: _isRequesting
+                        ? null
+                        : () async {
+                            AppHaptics.mediumImpact();
+                            setState(() => _isRequesting = true);
 
-                      final position = await getUserLocation();
+                            final granted = await _requestLocationAccess();
 
-                      if (position != null) {
-                        print("LAT: ${position.latitude}");
-                        print("LNG: ${position.longitude}");
+                            if (!context.mounted) return;
+                            setState(() => _isRequesting = false);
 
-                        Navigator.pushReplacementNamed(context, '/login');
-                      }
-                    },
+                            if (granted) {
+                              Navigator.pushReplacementNamed(context, '/login');
+                            }
+                          },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 64),
                     ),
-                    child: const Text("ALLOW LOCATION"),
+                    child: _isRequesting
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text("ALLOW LOCATION"),
                   ),
 
                   const SizedBox(height: 16),

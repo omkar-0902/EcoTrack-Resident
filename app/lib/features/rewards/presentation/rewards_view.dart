@@ -1,40 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-import '../../../core/app_theme.dart';
-import '../../../core/haptics.dart';
-import '../../../services/auth_service.dart';
-import '../../../shared/widgets/resident_app_bar.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class RewardsView extends StatefulWidget {
+import '../../../core/app_theme.dart';
+import '../../../shared/widgets/resident_app_bar.dart';
+import '../../profile/data/profile_provider.dart';
+
+class RewardsView extends ConsumerStatefulWidget {
   const RewardsView({super.key});
 
   @override
-  State<RewardsView> createState() => _RewardsViewState();
+  ConsumerState<RewardsView> createState() => _RewardsViewState();
 }
 
-class _RewardsViewState extends State<RewardsView> {
-  String ecoPoints = "1,240"; // Default or fetched
-
-  @override
-  void initState() {
-    super.initState();
-    _loadEcoPoints();
-  }
-
-  Future<void> _loadEcoPoints() async {
-    final token = await AuthService.getToken();
-    if (token == null) return;
-
-    final response = await AuthService.getUserProfile(token);
-
-    if (response["success"]) {
-      final data = response["data"];
-      setState(() {
-        ecoPoints = data["ecoPoints"].toString();
-      });
-    }
-  }
+class _RewardsViewState extends ConsumerState<RewardsView> {
+  /// Real points from the shared profile; "0" while loading or unavailable
+  /// (previously a hard-coded placeholder of "1,240" was shown).
+  String get ecoPoints =>
+      ref.watch(userProfileProvider).asData?.value.ecoPoints.toString() ?? "0";
 
   Map<String, dynamic> _getTierData() {
     int points = int.tryParse(ecoPoints.replaceAll(',', '')) ?? 0;
@@ -121,7 +105,7 @@ class _RewardsViewState extends State<RewardsView> {
   }
 
   Widget _buildTierCard(Map<String, dynamic> tierData) {
-    final progress = tierData["progress"] as double;
+    final progress = (tierData["progress"] as double).clamp(0.0, 1.0);
     final remaining = tierData["remaining"] as int;
     final isMax = tierData["nextName"] == "MAX";
 
@@ -132,7 +116,7 @@ class _RewardsViewState extends State<RewardsView> {
         gradient: LinearGradient(
           colors: [
             const Color(0xFF00E676),
-            const Color(0xFF00C853).withOpacity(0.9),
+            const Color(0xFF00C853).withValues(alpha: 0.9),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -140,7 +124,7 @@ class _RewardsViewState extends State<RewardsView> {
         borderRadius: BorderRadius.circular(40),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF00E676).withOpacity(0.25),
+            color: const Color(0xFF00E676).withValues(alpha: 0.25),
             blurRadius: 30,
             offset: const Offset(0, 10),
           ),
@@ -152,7 +136,7 @@ class _RewardsViewState extends State<RewardsView> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.12),
+              color: Colors.black.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(20),
             ),
             child: Row(
@@ -161,13 +145,16 @@ class _RewardsViewState extends State<RewardsView> {
                 const Icon(Icons.emoji_events_outlined,
                     color: Colors.black54, size: 16),
                 const SizedBox(width: 8),
-                Text(
-                  "${tierData["name"]} TIER RESIDENT",
-                  style: GoogleFonts.spaceGrotesk(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black87,
-                    letterSpacing: 0.5,
+                Flexible(
+                  child: Text(
+                    "${tierData["name"]} TIER RESIDENT",
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.spaceGrotesk(
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black87,
+                      letterSpacing: 0.5,
+                    ),
                   ),
                 ),
               ],
@@ -179,7 +166,7 @@ class _RewardsViewState extends State<RewardsView> {
             style: GoogleFonts.spaceGrotesk(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: Colors.black.withOpacity(0.7),
+              color: Colors.black.withValues(alpha: 0.7),
               height: 1.1,
             ),
           ),
@@ -196,16 +183,19 @@ class _RewardsViewState extends State<RewardsView> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                isMax
-                    ? "MAX TIER REACHED"
-                    : "$remaining PTS TO ${tierData["nextName"]} TIER",
-                style: GoogleFonts.spaceGrotesk(
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black.withOpacity(0.6),
+              Flexible(
+                child: Text(
+                  isMax
+                      ? "MAX TIER REACHED"
+                      : "$remaining PTS TO ${tierData["nextName"]} TIER",
+                  style: GoogleFonts.spaceGrotesk(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.black.withValues(alpha: 0.6),
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Text(
                 "${(progress * 100).toInt()}%",
                 style: GoogleFonts.spaceGrotesk(
@@ -223,7 +213,7 @@ class _RewardsViewState extends State<RewardsView> {
                 height: 14,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.15),
+                  color: Colors.black.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
@@ -263,7 +253,7 @@ class _RewardsViewState extends State<RewardsView> {
                     fontWeight: FontWeight.bold,
                     color: isSelected
                         ? Colors.white
-                        : AppTheme.onSurfaceVariant.withOpacity(0.6),
+                        : AppTheme.onSurfaceVariant.withValues(alpha: 0.6),
                     letterSpacing: 0.5,
                   ),
                 ),
@@ -279,7 +269,7 @@ class _RewardsViewState extends State<RewardsView> {
                     boxShadow: isSelected
                         ? [
                             BoxShadow(
-                              color: AppTheme.primaryNeon.withOpacity(0.6),
+                              color: AppTheme.primaryNeon.withValues(alpha: 0.6),
                               blurRadius: 10,
                               spreadRadius: 2,
                             )
@@ -295,7 +285,7 @@ class _RewardsViewState extends State<RewardsView> {
         Container(
           height: 1,
           width: double.infinity,
-          color: AppTheme.outlineVariant.withOpacity(0.3),
+          color: AppTheme.outlineVariant.withValues(alpha: 0.3),
         ),
       ],
     );
@@ -338,10 +328,10 @@ class _RewardsViewState extends State<RewardsView> {
           width: 82,
           height: 82,
           decoration: BoxDecoration(
-            color: isLocked ? AppTheme.surfaceContainerLow : AppTheme.surfaceContainerHigh.withOpacity(0.6),
+            color: isLocked ? AppTheme.surfaceContainerLow : AppTheme.surfaceContainerHigh.withValues(alpha: 0.6),
             borderRadius: BorderRadius.circular(22),
             border: Border.all(
-              color: isLocked ? Colors.transparent : AppTheme.primaryNeon.withOpacity(0.2),
+              color: isLocked ? Colors.transparent : AppTheme.primaryNeon.withValues(alpha: 0.2),
             ),
           ),
           child: Icon(
@@ -368,9 +358,9 @@ class _RewardsViewState extends State<RewardsView> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 48, horizontal: 32),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceContainer.withOpacity(0.35),
+        color: AppTheme.surfaceContainer.withValues(alpha: 0.35),
         borderRadius: BorderRadius.circular(44),
-        border: Border.all(color: AppTheme.primaryNeon.withOpacity(0.08)),
+        border: Border.all(color: AppTheme.primaryNeon.withValues(alpha: 0.08)),
       ),
       child: Column(
         children: [
@@ -381,7 +371,7 @@ class _RewardsViewState extends State<RewardsView> {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.primaryNeon.withOpacity(0.15),
+                  color: AppTheme.primaryNeon.withValues(alpha: 0.15),
                   blurRadius: 40,
                   spreadRadius: 10,
                 ),
@@ -410,7 +400,7 @@ class _RewardsViewState extends State<RewardsView> {
             textAlign: TextAlign.center,
             style: GoogleFonts.inter(
               fontSize: 14,
-              color: AppTheme.onSurfaceVariant.withOpacity(0.8),
+              color: AppTheme.onSurfaceVariant.withValues(alpha: 0.8),
               height: 1.5,
             ),
           ),
@@ -435,7 +425,7 @@ class _RewardsViewState extends State<RewardsView> {
       height: 6,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        color: active ? AppTheme.primaryNeon : AppTheme.primaryNeon.withOpacity(0.2),
+        color: active ? AppTheme.primaryNeon : AppTheme.primaryNeon.withValues(alpha: 0.2),
       ),
     );
   }

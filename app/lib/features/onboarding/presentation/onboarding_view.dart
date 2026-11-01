@@ -52,7 +52,7 @@ class _OnboardingViewState extends State<OnboardingView> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Theme.of(context).colorScheme.primary.withOpacity(0.05),
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.05),
               ),
             ),
           ),
@@ -90,7 +90,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                             ? Theme.of(context).colorScheme.primary
                             : Theme.of(
                                 context,
-                              ).colorScheme.outlineVariant.withOpacity(0.3),
+                              ).colorScheme.outlineVariant.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(4),
                       ),
                     );
@@ -200,10 +200,10 @@ class _OnboardingSlideWidget extends StatelessWidget {
             decoration: BoxDecoration(
               color: cs.surfaceContainer,
               borderRadius: BorderRadius.circular(40),
-              border: Border.all(color: color.withOpacity(0.1)),
+              border: Border.all(color: color.withValues(alpha: 0.1)),
               boxShadow: [
                 BoxShadow(
-                  color: color.withOpacity(0.05),
+                  color: color.withValues(alpha: 0.05),
                   blurRadius: 40,
                   spreadRadius: 10,
                 ),

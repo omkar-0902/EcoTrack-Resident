@@ -1,6 +1,11 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
-    <!-- ✅ Location Permissions -->
+    <!-- Foreground location only: the pickup location is read once, while the
+         app is open, when the resident schedules a pickup. FINE gives a precise
+         pickup point; COARSE is required alongside it on Android 12+ (the user
+         may grant approximate only). ACCESS_BACKGROUND_LOCATION is deliberately
+         NOT declared: the resident app never tracks location in the background.
+         Collector-side geofencing belongs to the EcoDispatch app. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION"/>
 

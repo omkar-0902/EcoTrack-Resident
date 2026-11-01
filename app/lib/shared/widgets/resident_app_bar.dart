@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../core/app_theme.dart';
+import '../../core/haptics.dart';
 
 class ResidentAppBar extends StatelessWidget implements PreferredSizeWidget {
   final String? title;
@@ -69,7 +70,11 @@ class ResidentAppBar extends StatelessWidget implements PreferredSizeWidget {
               children: [
                 IconButton(
                   icon: const Icon(Icons.notifications_none_rounded, color: Colors.white, size: 24),
-                  onPressed: () {},
+                  tooltip: 'Notifications',
+                  onPressed: () {
+                    AppHaptics.lightImpact();
+                    Navigator.pushNamed(context, '/notifications');
+                  },
                 ),
                 Positioned(
                   right: 12,

@@ -1,0 +1,13 @@
+name: geofence_contract
+description: >-
+  Shared, backend-agnostic geofencing contract for the EcoConnect (resident)
+  and EcoDispatch (collector) apps: models, accuracy-aware geofence
+  evaluation and a controlled event outbox. Pure Dart, no dependencies.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.11.4
+
+dev_dependencies:
+  test: ^1.29.0

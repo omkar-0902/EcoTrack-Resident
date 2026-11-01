@@ -49,7 +49,7 @@ class CustomTextField extends StatelessWidget {
           decoration: InputDecoration(
             hintText: hint,
             prefixIcon: prefixIcon != null 
-              ? Icon(prefixIcon, color: cs.primary.withOpacity(0.5), size: 20)
+              ? Icon(prefixIcon, color: cs.primary.withValues(alpha: 0.5), size: 20)
               : null,
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
           ),

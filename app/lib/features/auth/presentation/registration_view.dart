@@ -21,6 +21,89 @@ class _RegistrationViewState extends State<RegistrationView> {
   bool isLoading = false;
 
   @override
+  void dispose() {
+    userNameController.dispose();
+    phoneController.dispose();
+    addressController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// Returns to the screen that opened registration (the login screen).
+  /// Falls back to replacing with login if registration is the only route,
+  /// so Back never leaves a blank screen.
+  void _goBack() {
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop();
+    } else {
+      navigator.pushReplacementNamed('/login');
+    }
+  }
+
+  String? _validate({
+    required String userName,
+    required String phone,
+    required String address,
+    required String password,
+  }) {
+    if (userName.isEmpty || phone.isEmpty || address.isEmpty || password.isEmpty) {
+      return "Please fill in all fields";
+    }
+    if (!RegExp(r'^\+?[0-9]+$').hasMatch(phone)) {
+      return "Phone number can only contain digits";
+    }
+    return null;
+  }
+
+  Future<void> _submit() async {
+    if (isLoading) return;
+    AppHaptics.mediumImpact();
+
+    final userName = userNameController.text.trim();
+    final phone = phoneController.text.trim();
+    final address = addressController.text.trim();
+    final password = passwordController.text.trim();
+
+    final error = _validate(
+      userName: userName,
+      phone: phone,
+      address: address,
+      password: password,
+    );
+    if (error != null) {
+      _showMessage(error);
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() => isLoading = true);
+
+    final result = await AuthService.registerUser(
+      userName: userName,
+      password: password,
+      phoneNumber: phone,
+      address: address,
+    );
+
+    if (!mounted) return;
+    setState(() => isLoading = false);
+
+    if (result.isSuccess) {
+      _showMessage("Registration Successful");
+      _goBack();
+    } else {
+      _showMessage(result.errorMessage);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -33,9 +116,10 @@ class _RegistrationViewState extends State<RegistrationView> {
             color: Theme.of(context).colorScheme.onSurface,
             size: 20,
           ),
+          tooltip: 'Back',
           onPressed: () {
             AppHaptics.lightImpact();
-            Navigator.pop(context);
+            _goBack();
           },
         ),
       ),
@@ -109,38 +193,16 @@ class _RegistrationViewState extends State<RegistrationView> {
 
               // 🚀 REGISTER BUTTON
               ElevatedButton(
-                onPressed: () async {
-                  AppHaptics.mediumImpact();
-
-                  setState(() => isLoading = true);
-
-                  final response = await AuthService.registerUser(
-                    userName: userNameController.text.trim(),
-                    password: passwordController.text.trim(),
-                    phoneNumber: phoneController.text.trim(),
-                    address: addressController.text.trim(),
-                    role: "ROLE_RESIDENT",
-                  );
-
-                  setState(() => isLoading = false);
-
-                  if (response["success"]) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Registration Successful")),
-                    );
-
-                    Navigator.pop(context);
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(response["message"])),
-                    );
-                  }
-                },
+                onPressed: isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 64),
                 ),
                 child: isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Text("INITIALIZE ACCOUNT"),
               ),
 
@@ -154,7 +216,7 @@ class _RegistrationViewState extends State<RegistrationView> {
                     fontSize: 12,
                     color: Theme.of(
                       context,
-                    ).colorScheme.onSurfaceVariant.withOpacity(0.7),
+                    ).colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                   ),
                 ),
               ),

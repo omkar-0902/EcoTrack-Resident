@@ -8,6 +8,9 @@ class PillNavigationBar extends StatelessWidget {
   final List<PillNavItemData> items;
   final int currentIndex;
   final VoidCallback onLogoTap;
+
+  /// Called with the index of the tapped item.
+  final ValueChanged<int>? onItemTap;
   final Key? logoKey;
 
   const PillNavigationBar({
@@ -15,51 +18,80 @@ class PillNavigationBar extends StatelessWidget {
     required this.items,
     required this.currentIndex,
     required this.onLogoTap,
+    this.onItemTap,
     this.logoKey,
   });
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(40),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-        child: Container(
-          height: 72,
-          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          padding: const EdgeInsets.all(6),
-          decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.surfaceContainer.withOpacity(0.8),
-            borderRadius: BorderRadius.circular(40),
-            border: Border.all(color: Theme.of(context).colorScheme.outlineVariant.withOpacity(0.2)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.1),
-                blurRadius: 25,
-                offset: const Offset(0, 10),
+    // The outer spacing is applied OUTSIDE the clip: previously the margin was
+    // inside ClipRRect/BackdropFilter, so the blur region was larger than the
+    // visible pill and clipped/blurred whatever sat just above it (e.g. the
+    // Schedule Pickup button's glow). System insets are handled by the
+    // SafeArea that wraps this widget in MainScaffold.
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(40),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Container(
+            height: 72,
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainer.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(40),
+              border: Border.all(
+                color: Theme.of(
+                  context,
+                ).colorScheme.outlineVariant.withValues(alpha: 0.2),
               ),
-            ],
-          ),
-          child: Row(
-            children: [
-              // Rotating Logo - Now the primary navigation trigger (State preserved via logoKey)
-              _RotatingLogo(key: logoKey, onTap: onLogoTap),
-              const SizedBox(width: 8),
-              
-              // Navigation Items - Clicks are now disabled
-              Expanded(
-                child: Row(
-                  children: List.generate(items.length, (index) {
-                    return Expanded(
-                      child: _PillNavItem(
-                        data: items[index],
-                        isActive: currentIndex == index,
-                      ),
-                    );
-                  }),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 25,
+                  offset: const Offset(0, 10),
                 ),
-              ),
-            ],
+              ],
+            ),
+            child: Row(
+              children: [
+                // Rotating Logo - Now the primary navigation trigger (State preserved via logoKey)
+                _RotatingLogo(key: logoKey, onTap: onLogoTap),
+                const SizedBox(width: 8),
+
+                // Navigation items: each opens its tab.
+                Expanded(
+                  child: Row(
+                    children: List.generate(items.length, (index) {
+                      final isActive = currentIndex == index;
+                      return Expanded(
+                        child: Semantics(
+                          button: true,
+                          selected: isActive,
+                          label: items[index].label,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: onItemTap == null
+                                ? null
+                                : () {
+                                    AppHaptics.selectionClick();
+                                    onItemTap!(index);
+                                  },
+                            child: _PillNavItem(
+                              data: items[index],
+                              isActive: isActive,
+                            ),
+                          ),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -82,7 +114,8 @@ class _RotatingLogo extends StatefulWidget {
   State<_RotatingLogo> createState() => _RotatingLogoState();
 }
 
-class _RotatingLogoState extends State<_RotatingLogo> with TickerProviderStateMixin {
+class _RotatingLogoState extends State<_RotatingLogo>
+    with TickerProviderStateMixin {
   late AnimationController _rotationController;
   final List<_LeafParticle> _particles = [];
 
@@ -99,16 +132,18 @@ class _RotatingLogoState extends State<_RotatingLogo> with TickerProviderStateMi
     setState(() {
       final random = math.Random();
       for (int i = 0; i < 6; i++) {
-        _particles.add(_LeafParticle(
-          id: DateTime.now().millisecondsSinceEpoch + i,
-          angle: random.nextDouble() * 2 * math.pi,
-          distance: 40.0 + random.nextDouble() * 40.0,
-          onFinished: (id) {
-            setState(() {
-              _particles.removeWhere((p) => p.id == id);
-            });
-          },
-        ));
+        _particles.add(
+          _LeafParticle(
+            id: DateTime.now().millisecondsSinceEpoch + i,
+            angle: random.nextDouble() * 2 * math.pi,
+            distance: 40.0 + random.nextDouble() * 40.0,
+            onFinished: (id) {
+              setState(() {
+                _particles.removeWhere((p) => p.id == id);
+              });
+            },
+          ),
+        );
       }
     });
   }
@@ -141,7 +176,7 @@ class _RotatingLogoState extends State<_RotatingLogo> with TickerProviderStateMi
               // Force rotation from beginning
               _rotationController.forward(from: 0);
               _spawnParticles();
-              widget.onTap(); 
+              widget.onTap();
             },
             child: RotationTransition(
               turns: _rotationController,
@@ -153,7 +188,9 @@ class _RotatingLogoState extends State<_RotatingLogo> with TickerProviderStateMi
                   shape: BoxShape.circle,
                   boxShadow: [
                     BoxShadow(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.3),
                       blurRadius: 12,
                       spreadRadius: 2,
                     ),
@@ -191,7 +228,8 @@ class _LeafParticle extends StatefulWidget {
   State<_LeafParticle> createState() => _LeafParticleState();
 }
 
-class _LeafParticleState extends State<_LeafParticle> with SingleTickerProviderStateMixin {
+class _LeafParticleState extends State<_LeafParticle>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _opacity;
   late Animation<double> _pos;
@@ -206,12 +244,16 @@ class _LeafParticleState extends State<_LeafParticle> with SingleTickerProviderS
     );
 
     _opacity = Tween<double>(begin: 1.0, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: const Interval(0.6, 1.0, curve: Curves.easeOut)),
+      CurvedAnimation(
+        parent: _controller,
+        curve: const Interval(0.6, 1.0, curve: Curves.easeOut),
+      ),
     );
-    
-    _pos = Tween<double>(begin: 0.0, end: widget.distance).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
+
+    _pos = Tween<double>(
+      begin: 0.0,
+      end: widget.distance,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
 
     _scale = TweenSequence<double>([
       TweenSequenceItem(tween: Tween<double>(begin: 0.0, end: 1.2), weight: 30),
@@ -234,7 +276,7 @@ class _LeafParticleState extends State<_LeafParticle> with SingleTickerProviderS
       builder: (context, child) {
         final x = math.cos(widget.angle) * _pos.value;
         final y = math.sin(widget.angle) * _pos.value;
-        
+
         return Positioned(
           left: 24 + x - 6,
           top: 24 + y - 6,
@@ -262,16 +304,14 @@ class _PillNavItem extends StatefulWidget {
   final PillNavItemData data;
   final bool isActive;
 
-  const _PillNavItem({
-    required this.data,
-    required this.isActive,
-  });
+  const _PillNavItem({required this.data, required this.isActive});
 
   @override
   State<_PillNavItem> createState() => _PillNavItemState();
 }
 
-class _PillNavItemState extends State<_PillNavItem> with SingleTickerProviderStateMixin {
+class _PillNavItemState extends State<_PillNavItem>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _anim;
 
@@ -315,7 +355,9 @@ class _PillNavItemState extends State<_PillNavItem> with SingleTickerProviderSta
       child: Container(
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(32),
-          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.1),
+          color: Theme.of(
+            context,
+          ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.1),
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(32),
@@ -329,7 +371,8 @@ class _PillNavItemState extends State<_PillNavItem> with SingleTickerProviderSta
                   return FractionalTranslation(
                     translation: const Offset(0, 0),
                     child: Transform.scale(
-                      scale: _anim.value * 3.5, // Large enough to cover the pill
+                      scale:
+                          _anim.value * 3.5, // Large enough to cover the pill
                       alignment: Alignment.bottomCenter,
                       child: Container(
                         width: 40,
@@ -343,7 +386,7 @@ class _PillNavItemState extends State<_PillNavItem> with SingleTickerProviderSta
                   );
                 },
               ),
-              
+
               // Content Stack (Text sliding)
               AnimatedBuilder(
                 animation: _anim,
@@ -359,11 +402,13 @@ class _PillNavItemState extends State<_PillNavItem> with SingleTickerProviderSta
                           child: Icon(
                             widget.data.icon,
                             size: 18,
-                            color: Theme.of(context).colorScheme.onSurfaceVariant,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
                           ),
                         ),
                       ),
-                      
+
                       // Active Text
                       Opacity(
                         opacity: _anim.value,
@@ -384,7 +429,7 @@ class _PillNavItemState extends State<_PillNavItem> with SingleTickerProviderSta
                   );
                 },
               ),
-              
+
               // Active Dot
               if (widget.isActive)
                 Positioned(

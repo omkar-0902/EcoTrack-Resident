@@ -1,0 +1,5 @@
+{
+  "APP_ENV": "prod",
+  "API_BASE_URL": "https://REPLACE-WITH-PRODUCTION-API-URL",
+  "PICKUP_MAX_ACCURACY_M": ""
+}

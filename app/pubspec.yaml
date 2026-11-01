@@ -1,5 +1,5 @@
 name: app
-description: "A new Flutter project."
+description: "EcoConnect - resident app of the EcoTrack waste collection system."
 publish_to: 'none'
 
 version: 1.0.0+1
@@ -11,16 +11,18 @@ dependencies:
   flutter:
     sdk: flutter
 
-  cupertino_icons: ^1.0.8
   google_fonts: ^8.0.2
   intl: ^0.20.2
   flutter_riverpod: ^3.3.1
-  animations: ^2.1.2
   flutter_secure_storage: ^10.0.0
   http: ^1.6.0
   geolocator: ^12.0.0
-  permission_handler: ^11.3.1
   jwt_decoder: ^2.0.1
+
+  # Shared geofencing contract with the EcoDispatch collector app (local,
+  # pure Dart, no third-party dependencies).
+  geofence_contract:
+    path: ../packages/geofence_contract
 
 dev_dependencies:
   flutter_test:

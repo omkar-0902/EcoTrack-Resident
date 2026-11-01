@@ -19,6 +19,51 @@ class _LoginViewState extends State<LoginView> {
   bool isLoading = false;
 
   @override
+  void dispose() {
+    userNameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  void _showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  Future<void> _submit() async {
+    if (isLoading) return;
+    AppHaptics.mediumImpact();
+
+    final userName = userNameController.text.trim();
+    // Trimmed for consistency with registration, which trims the password.
+    final password = passwordController.text.trim();
+
+    if (userName.isEmpty || password.isEmpty) {
+      _showMessage("Please enter your username and password");
+      return;
+    }
+
+    FocusScope.of(context).unfocus();
+    setState(() => isLoading = true);
+
+    final result = await AuthService.loginUser(
+      userName: userName,
+      password: password,
+    );
+
+    if (!mounted) return;
+    setState(() => isLoading = false);
+
+    if (result.isSuccess) {
+      _showMessage("Login Successful");
+      Navigator.pushReplacementNamed(context, '/home', arguments: userName);
+    } else {
+      _showMessage(result.errorMessage);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -87,39 +132,16 @@ class _LoginViewState extends State<LoginView> {
               const SizedBox(height: 40),
 
               ElevatedButton(
-                onPressed: () async {
-                  AppHaptics.mediumImpact();
-
-                  setState(() => isLoading = true);
-
-                  final response = await AuthService.loginUser(
-                    userName: userNameController.text.trim(),
-                    password: passwordController.text.trim(),
-                  );
-
-                  setState(() => isLoading = false);
-
-                  if (response["success"]) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text("Login Successful")),
-                    );
-
-                    Navigator.pushReplacementNamed(
-                      context,
-                      '/home',
-                      arguments: userNameController.text.trim(),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(response["message"])),
-                    );
-                  }
-                },
+                onPressed: isLoading ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 64),
                 ),
                 child: isLoading
-                    ? const CircularProgressIndicator(color: Colors.white)
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
                     : const Text("ACCESS SYSTEM"),
               ),
 

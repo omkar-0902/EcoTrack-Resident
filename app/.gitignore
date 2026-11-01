@@ -43,3 +43,7 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Per-environment build settings (copy from config/*.example.json).
+/config/*.json
+!/config/*.example.json
